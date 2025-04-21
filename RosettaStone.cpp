@@ -3,48 +3,92 @@
 using namespace std;
 
 Map<string, double> kGramsIn(const string& str, int kGramLength) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) str;
-    (void) kGramLength;
-    return {};
+    Map<string, double> result;
+    if (kGramLength <= 0) {
+        error("kGramLength must be positive");
+    }
+    if (str.length() < kGramLength) {
+        return result; // empty map
+    }
+    for (int i = 0; i <= str.length() - kGramLength; i++) {
+        string kGram = str.substr(i, kGramLength);
+        result[kGram]++;
+    }
+    return result;
 }
 
 Map<string, double> normalize(const Map<string, double>& input) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) input;
-    return {};
+    if (input.isEmpty()) {
+        error("Cannot normalize an empty map");
+    }
+    double magnitude = 0.0;
+    for (const string& key : input) {
+        magnitude += input[key] * input[key];
+    }
+    magnitude = sqrt(magnitude);
+    if (magnitude == 0.0) {
+        error("Cannot normalize a zero vector");
+    }
+    Map<string, double> result;
+    for (const string& key : input) {
+        result[key] = input[key] / magnitude;
+    }
+    return result;
 }
 
 Map<string, double> topKGramsIn(const Map<string, double>& source, int numToKeep) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) source;
-    (void) numToKeep;
-    return {};
+    if (numToKeep < 0) {
+        error("numToKeep must be non-negative");
+    }
+    if (numToKeep == 0 || source.isEmpty()) {
+        return {};
+    }
+    Vector<pair<string, double>> entries;
+    for (const string& key : source) {
+        entries.add({key, source[key]});
+    }
+    // Sort in descending order of frequency
+    sort(entries.begin(), entries.end(), [](const pair<string, double>& a, const pair<string, double>& b) {
+        return a.second > b.second;
+    });
+    Map<string, double> result;
+    int count = min(numToKeep, entries.size());
+    for (int i = 0; i < count; i++) {
+        result[entries[i].first] = entries[i].second;
+    }
+    return result;
 }
 
 double cosineSimilarityOf(const Map<string, double>& lhs, const Map<string, double>& rhs) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) lhs;
-    (void) rhs;
-    return {};
+    double dotProduct = 0.0;
+    // Iterate through all keys in both maps
+    Set<string> allKeys;
+    for (const string& key : lhs) {
+        allKeys.add(key);
+    }
+    for (const string& key : rhs) {
+        allKeys.add(key);
+    }
+    for (const string& key : allKeys) {
+        dotProduct += lhs.get(key) * rhs.get(key);
+    }
+    return dotProduct;
 }
 
-string guessLanguageOf(const Map<string, double>& textProfile,
-                       const Set<Corpus>& corpora) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) textProfile;
-    (void) corpora;
-    return "";
+string guessLanguageOf(const Map<string, double>& textProfile, const Set<Corpus>& corpora) {
+    if (corpora.isEmpty()) {
+        error("No corpora provided");
+    }
+    string bestLanguage;
+    double bestSimilarity = -1.0; // cosine similarity ranges from -1 to 1
+    for (const Corpus& corpus : corpora) {
+        double similarity = cosineSimilarityOf(textProfile, corpus.profile);
+        if (similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            bestLanguage = corpus.name;
+        }
+    }
+    return bestLanguage;
 }
 
 
